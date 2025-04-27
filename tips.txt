@@ -1,0 +1,7 @@
+使用 GitHub Pages 上传网站：
+GitHub Pages 可以免费托管静态网站，适合静态 HTML、CSS 和 JavaScript 项目。
+步骤：
+把项目代码上传到 GitHub 仓库。
+进入仓库的 “Settings” 页面。
+在 “GitHub Pages” 部分，选择要发布的分支和文件夹。
+稍等片刻，GitHub 会为你分配一个网址（通常是 https://<用户名>.github.io/<仓库名>）。

@@ -1,7 +1,101 @@
-使用 GitHub Pages 上传网站：
-GitHub Pages 可以免费托管静态网站，适合静态 HTML、CSS 和 JavaScript 项目。
-步骤：
-把项目代码上传到 GitHub 仓库。
-进入仓库的 “Settings” 页面。
-在 “GitHub Pages” 部分，选择要发布的分支和文件夹。
-稍等片刻，GitHub 会为你分配一个网址（通常是 https://<用户名>.github.io/<仓库名>）。
+数据库重建代码：
+create database ISHomework;
+use ISHomework;
+-- 创建VIP表
+-- password列进行BCrypt加密
+
+CREATE TABLE VIP (
+                     MemberID CHAR(20) NOT NULL COMMENT '用户名。注册时查重，该属性不可重复',
+                     Password CHAR(60) NOT NULL COMMENT '密码(加密存储)',
+                     Name CHAR(12) COMMENT '会员名',
+                     UserID CHAR(30) NOT NULL unique COMMENT '身份证号(唯一识别)',
+                     Mobilephone CHAR(12) COMMENT '手机号码',
+                     Telephone CHAR(13) COMMENT '固定电话',
+                     EMail CHAR(30) COMMENT '电子邮件',
+                     QQNumber CHAR(15) COMMENT 'QQ号码',
+                     ZipCode CHAR(6) COMMENT '邮编',
+                     Address CHAR(100) COMMENT '详细地址(会员自己住址)',
+                     Occupation CHAR(16) COMMENT '职业',
+                     Income CHAR(20) COMMENT '收入水平(3000-5000)',
+                     RankMember CHAR(6) DEFAULT '铜冠' COMMENT '会员级别(分5级)',
+                     CurrentScore INT(10) DEFAULT 0 COMMENT '当前积分量',
+                     BalanceEAccount DECIMAL(5,2) DEFAULT 0.00 COMMENT '电子帐号余额(存钱)',
+                     JoinDate DATE COMMENT '加入日期',
+                     IsFreezed BOOLEAN DEFAULT FALSE COMMENT '是否冻结(若被冻结则不能购物，可浏览)',
+                     Remark TEXT COMMENT '备注',
+                     CONSTRAINT VIP_chk_income CHECK (Income IN ('3000以下', '3000-5000', '5000-8000', '8000-12000', '12000以上')),
+                     CONSTRAINT VIP_chk_rank CHECK (RankMember IN ('铜冠', '银冠', '金冠', '钻石冠', '至尊冠'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会员信息表';
+drop table VIP;
+
+
+-- 创建Manager表。可自己设置一个账户用于登录
+CREATE TABLE Manager (
+                     ManagerID VARCHAR(20) PRIMARY KEY,
+                     avatar VARCHAR(100) DEFAULT '../../img/User.jpg',
+                     password VARCHAR(50)  NOT NULL,
+                     name VARCHAR(50)  unique NOT NULL,
+                     mobilephone VARCHAR(15),
+                     telephone VARCHAR(15),
+                     email VARCHAR(50),
+                     qqNumber VARCHAR(15),
+                     address VARCHAR(100),
+                     joinDate DATE,
+                     remark TEXT
+);
+drop table Manager;
+
+
+-- 普通用户+VIP。用于登录和注册。rankMember='暂无'为普通用户
+-- 登录，注册，修改密码相关属性：MemberID，Password，Mobilephone。身份判断：RankMember
+CREATE TABLE AllUser (
+                     MemberID CHAR(20) NOT NULL COMMENT '用户名。注册时查重，该属性不可重复',
+                     Password CHAR(60) NOT NULL COMMENT '密码(加密存储)',
+                     Name CHAR(12) COMMENT '会员名',
+                     UserID CHAR(30) COMMENT '身份证号(vip唯一识别，在此不做要求)',
+                     Mobilephone CHAR(12) not null COMMENT '手机号码',
+                     Telephone CHAR(13) COMMENT '固定电话',
+                     EMail CHAR(30) COMMENT '电子邮件',
+                     QQNumber CHAR(15) COMMENT 'QQ号码',
+                     ZipCode CHAR(6) COMMENT '邮编',
+                     Address CHAR(100) COMMENT '详细地址(会员自己住址)',
+                     Occupation CHAR(16) COMMENT '职业',
+                     Income CHAR(20) COMMENT '收入水平(3000-5000)，具体格式在此不做要求',
+                     RankMember CHAR(6) DEFAULT '暂无' COMMENT '等级',
+                     CurrentScore INT(10) DEFAULT 0 COMMENT '当前积分量',
+                     BalanceEAccount DECIMAL(5,2) DEFAULT 0.00 COMMENT '电子帐号余额(存钱)',
+                     JoinDate DATE COMMENT '加入日期',
+                     IsFreezed BOOLEAN DEFAULT FALSE COMMENT '是否冻结(若被冻结则不能购物，可浏览)',
+                     Remark TEXT COMMENT '备注',
+                     /*CONSTRAINT AllUser_chk_income CHECK (Income IN ('3000以下', '3000-5000', '5000-8000', '8000-12000', '12000以上')),*/
+                     CONSTRAINT AllUser_chk_rank CHECK (RankMember IN ('暂无','铜冠', '银冠', '金冠', '钻石冠', '至尊冠'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会员信息表';
+drop table AllUser;
+
+
+-- 存储要求和vip表一致
+CREATE TABLE deleteVip (
+                         MemberID CHAR(20) NOT NULL COMMENT '用户名。注册时查重，该属性不可重复',
+                         Password CHAR(60) NOT NULL COMMENT '密码(加密存储)',
+                         Name CHAR(12) COMMENT '会员名',
+                         UserID CHAR(30) NOT NULL unique COMMENT '身份证号(vip唯一识别)',
+                         Mobilephone CHAR(12) not null COMMENT '手机号码',
+                         Telephone CHAR(13) COMMENT '固定电话',
+                         EMail CHAR(30) COMMENT '电子邮件',
+                         QQNumber CHAR(15) COMMENT 'QQ号码',
+                         ZipCode CHAR(6) COMMENT '邮编',
+                         Address CHAR(100) COMMENT '详细地址(会员自己住址)',
+                         Occupation CHAR(16) COMMENT '职业',
+                         Income CHAR(20) COMMENT '收入水平(3000-5000)',
+                         RankMember CHAR(6) DEFAULT '暂无' COMMENT '等级',
+                         CurrentScore INT(10) DEFAULT 0 COMMENT '当前积分量',
+                         BalanceEAccount DECIMAL(5,2) DEFAULT 0.00 COMMENT '电子帐号余额(存钱)',
+                         JoinDate DATE COMMENT '加入日期',
+                         IsFreezed BOOLEAN DEFAULT FALSE COMMENT '是否冻结(若被冻结则不能购物，可浏览)',
+                         Remark TEXT COMMENT '备注',
+                         CONSTRAINT deleteVip_chk_income CHECK (Income IN ('3000以下', '3000-5000', '5000-8000', '8000-12000', '12000以上')),
+                         CONSTRAINT deleteVip_chk_rank CHECK (RankMember IN ('暂无','铜冠', '银冠', '金冠', '钻石冠', '至尊冠'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用于存储暂时删除的会员';
+drop table deleteVip;
+
+

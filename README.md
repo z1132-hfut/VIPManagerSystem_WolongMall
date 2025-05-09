@@ -7,4 +7,4 @@
 
 该项目用到的技术：Java，html，css，javascript，servlet，jsp，sql。
 
-管理员账号：z    密码：111111
+该项目为Maven项目，需在Tomcat服务器环境下运行，运行前需要先进行环境配置。管理员账号：z   密码：111111

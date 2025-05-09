@@ -7,4 +7,4 @@
 
 该项目用到的技术：Java，html，css，javascript，servlet，jsp，sql。
 
-管理员账号：z。密码：111111
+管理员账号：z    密码：111111

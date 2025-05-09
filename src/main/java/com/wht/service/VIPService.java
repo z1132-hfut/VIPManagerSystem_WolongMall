@@ -290,4 +290,56 @@ public class VIPService {
         }
     }
 
+    //撤回添加备注
+    public void undoAddRemark(String memberId,String remark){  //传递的是原备注
+        String sql = "SELECT Remark FROM vip where MemberID = ?";
+        String updateSql1 = "UPDATE AllUser SET Remark=? WHERE MemberID=?";
+        String updateSql2 = "UPDATE vip SET Remark=? WHERE MemberID=?";
+        ResultSet rs = null;
+        try {
+            // 执行查询
+            rs = SqlHelper.executeQuery(sql, new String[]{memberId});
+            // 处理结果集
+            if (rs != null && rs.next()) {
+                String value = rs.getString("Remark");
+                SqlHelper.executeUpdateRemark(updateSql1, remark, memberId);
+                SqlHelper.executeUpdateRemark(updateSql2, remark, memberId);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("获取冻结信息失败: " + e.getMessage());
+        } finally {
+            // 关闭资源
+            SqlHelper.close(SqlHelper.getCt(), SqlHelper.getPs(), rs);
+        }
+
+    }
+
+    //撤回冻结/解冻vip
+    public int undoFreezeVIP(String memberId,boolean ns){
+        //0：成功。1：失败
+        String sql = "SELECT IsFreezed FROM vip where MemberID = ?";
+        String updateSql1 = "UPDATE AllUser SET IsFreezed=? WHERE MemberID=?";
+        String updateSql2 = "UPDATE vip SET IsFreezed=? WHERE MemberID=?";
+        ResultSet rs = null;
+        try {
+            // 执行查询
+            rs = SqlHelper.executeQuery(sql, new String[]{memberId});
+            // 处理结果集
+            if (rs != null && rs.next()) {
+                boolean value = !rs.getBoolean("IsFreezed");
+                if(value!=ns){
+                    SqlHelper.executeUpdateBoolean(updateSql1, value, memberId);
+                    SqlHelper.executeUpdateBoolean(updateSql2, value, memberId);
+                    return 0;
+                }
+                return 1;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("获取冻结信息失败: " + e.getMessage());
+        } finally {
+            // 关闭资源
+            SqlHelper.close(SqlHelper.getCt(), SqlHelper.getPs(), rs);
+        }
+        return 1;
+    }
 }

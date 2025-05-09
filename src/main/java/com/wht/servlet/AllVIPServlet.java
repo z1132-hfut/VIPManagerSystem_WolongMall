@@ -63,7 +63,6 @@ public class AllVIPServlet extends HttpServlet {
         //冻结/解冻
         }else if(type.equals("freeze")){
             String vipId = request.getParameter("vipid");
-            System.out.println(vipId);
             vs.freezeVIP(vipId);
             //获取更新后的全部会员数据
             vipList = vs.GetAllVIPs();
@@ -77,7 +76,6 @@ public class AllVIPServlet extends HttpServlet {
         } else if (type.equals("addRemark")) {
             String vipId = request.getParameter("vipid");
             String remark = request.getParameter("remark");
-            System.out.println(vipId+" "+remark);
             vs.addRemark(vipId, remark);
             //获取更新后的全部会员数据
             vipList = vs.GetAllVIPs();
@@ -125,6 +123,43 @@ public class AllVIPServlet extends HttpServlet {
             //更新页面数据，刷新
             request.getSession().setAttribute("AllVIP", vipList);
             request.getSession().setAttribute("ison", type);
+
+        //撤回添加备注
+        }else if (type.equals("undoAddRemark")) {
+            String vipId = request.getParameter("vipid");
+            String remark = request.getParameter("remark");  //原备注
+            vs.addRemark(vipId, remark);
+            //获取更新后的全部会员数据
+            vipList = vs.GetAllVIPs();
+            //更新页面数据，刷新
+            request.getSession().setAttribute("AllVIP", vipList);
+            request.getSession().setAttribute("ison", type);
+            response.getWriter().println("<script type='text/javascript'> alert('撤回成功');" +
+                    "window.location.href='" + request.getContextPath() + "/jsp/ManagerPages/showAllVIP.jsp';"+
+                    "</script>");
+
+        //撤回冻结/解冻
+        }else if (type.equals("undoFreeze")) {
+            String vipId = request.getParameter("vipid");
+            String status = request.getParameter("status");
+            boolean ns= !status.equals("冻结");
+            int res=vs.undoFreezeVIP(vipId,ns);
+            if(res==0){
+                //获取更新后的全部会员数据
+                vipList = vs.GetAllVIPs();
+                //更新页面数据，刷新
+                request.getSession().setAttribute("AllVIP", vipList);
+                request.getSession().setAttribute("ison", type);
+                response.getWriter().println("<script type='text/javascript'> alert('撤回成功');" +
+                        "window.location.href='" + request.getContextPath() + "/jsp/ManagerPages/showAllVIP.jsp';"+
+                        "</script>");
+            }else{
+                response.getWriter().println("<script type='text/javascript'> alert('操作重复，撤回失败');" +
+                        "window.location.href='" + request.getContextPath() + "/jsp/ManagerPages/showAllVIP.jsp';"+
+                        "</script>");
+            }
+
+        }else{
 
         }
 

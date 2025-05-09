@@ -216,12 +216,10 @@ function undoDelete(logId) {
 
 //操作日志存储
 let operationLogs = JSON.parse(localStorage.getItem('vipOperationLogs')) || [];
-
 //初始化日志按钮事件
 document.getElementById('logBtn').addEventListener('click', function() {
     showLogModal();
 });
-
 //清空日志按钮事件
 document.getElementById('clearLogsBtn').addEventListener('click', function() {
     if(confirm('确定要清空所有操作日志吗？')) {
@@ -230,7 +228,6 @@ document.getElementById('clearLogsBtn').addEventListener('click', function() {
         renderLogList();
     }
 });
-
 //显示日志模态框
 function showLogModal() {
     const logModal = document.getElementById('logModal');
@@ -242,6 +239,51 @@ function showLogModal() {
         logModal.style.display = 'none';
     });
 }
+//添加日志
+function addLog(action, details) {
+    const log = {
+        id: generateId(),
+        action,
+        details: transformDetails(action, details),
+        timestamp: new Date().toISOString()
+    };
+
+    operationLogs.push(log);
+    saveLogs();
+}
+//保存日志到本地存储
+function saveLogs() {
+    localStorage.setItem('vipOperationLogs', JSON.stringify(operationLogs));
+}
+//生成唯一ID
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+//格式化日期时间
+function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleString();
+}
+/*// 辅助函数：添加表单字段
+function addFormField(form, name, value) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+}*/
+//删除单条日志
+function deleteLog(logId) {
+    if(confirm('确定要删除这条操作日志吗？')) {
+        // 从日志数组中移除指定日志
+        operationLogs = operationLogs.filter(log => log.id !== logId);
+        // 保存到本地存储
+        saveLogs();
+        // 重新渲染日志列表
+        renderLogList();
+    }
+}
+
 
 //渲染日志信息
 function renderLogList() {
@@ -290,6 +332,30 @@ function renderLogList() {
                             style="margin-left: 10px;">删除日志</button>
                     </div>`;
                 break;
+            case 'undoAddRemark':
+                // 备注操作：显示会员名及其备注
+                const addRemarkMember = log.details.vipId;
+                actionText = `给会员${addRemarkMember}添加了备注${log.details.newRemark}。原备注：${log.details.historyRemark}`;
+                actionButton = `
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-search" onclick="undoAddRemark('${log.id}')" 
+                            style="margin-left: 10px;">撤销修改</button>
+                        <button class="btn btn-delete" onclick="deleteLog('${log.id}')" 
+                            style="margin-left: 10px;">删除日志</button>
+                    </div>`;
+                break;
+            case 'undoFreeze':
+                // 冻结/解冻操作：显示会员名及其状态
+                const member = log.details.vipId;
+                actionText = `将会员: ${member}的状态修改为${log.details.newStatus}`;
+                actionButton = `
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-search" onclick="undoFreeze('${log.id}')" 
+                            style="margin-left: 10px;">撤销操作</button>
+                        <button class="btn btn-delete" onclick="deleteLog('${log.id}')" 
+                            style="margin-left: 10px;">删除日志</button>
+                    </div>`;
+                break;
             default:
                 // 其他操作类型
                 actionText = `执行了${log.action}操作`;
@@ -312,19 +378,6 @@ function renderLogList() {
     });
 }
 
-//添加日志
-function addLog(action, details) {
-    const log = {
-        id: generateId(),
-        action,
-        details: transformDetails(action, details),
-        timestamp: new Date().toISOString()
-    };
-
-    operationLogs.push(log);
-    saveLogs();
-}
-
 //根据操作类型转换details格式
 function transformDetails(action, details) {
     switch(action) {
@@ -341,26 +394,25 @@ function transformDetails(action, details) {
                 vipId: details.vipId,
                 vipNames: Array.isArray(details.vipName) ? details.vipName : [details.vipName]
             };
+        case 'undoAddRemark':
+            // 撤回添加备注操作：添加id和新旧备注
+            return {
+                vipId: details.id,
+                historyRemark: details.historyremark,
+                newRemark: details.newremark
+            };
+        case 'undoFreeze':
+            // 撤回冻结/解冻：添加
+            return {
+                vipId: details.vipId,
+                oldStatus: details.oldStatus,
+                newStatus: details.newStatus,
+            };
         default:
             return details;
     }
 }
 
-//保存日志到本地存储
-function saveLogs() {
-    localStorage.setItem('vipOperationLogs', JSON.stringify(operationLogs));
-}
-
-//生成唯一ID
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-//格式化日期时间
-function formatDateTime(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleString();
-}
 
 //显示搜索结果
 function showSearchResults(logId) {
@@ -485,23 +537,91 @@ function undoDelete(logId) {
     }
 }
 
-// 辅助函数：添加表单字段
-function addFormField(form, name, value) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
+// 撤销添加备注（传统的表单提交格式）
+function undoAddRemark(logId) {
+    // if(!log) return;
+
+    const log = operationLogs.find(l => l.id === logId);
+
+    if(confirm(`确定撤销给会员 ${log.details.vipId} 添加备注吗？`)) {
+        // 创建form元素
+        const form = document.createElement('form');
+        form.method = 'POST';
+        //form.action = fullPath;  // 使用计算得到的路径
+        form.action = `/AllVIPServlet`;  //正确后端路径
+        form.style.display = 'none';
+
+        // 添加type参数
+        const typeInput = document.createElement('input');
+        typeInput.type = 'hidden';
+        typeInput.name = 'type';
+        typeInput.value = 'undoAddRemark';
+        form.appendChild(typeInput);
+
+        // 添加id参数
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'vipid';
+        idInput.value = log.details.vipId;
+        form.appendChild(idInput);
+
+        // 添加原备注
+        const remarkInput = document.createElement('input');
+        remarkInput.type = 'hidden';
+        remarkInput.name = 'remark';
+        remarkInput.value = log.details.historyRemark;
+        form.appendChild(remarkInput);
+
+        // 添加到DOM并提交
+        document.body.appendChild(form);
+        form.submit();
+
+        // 从日志中移除这条记录
+        operationLogs = operationLogs.filter(l => l.id !== logId);
+        saveLogs();
+    }
 }
 
-//删除单条日志
-function deleteLog(logId) {
-    if(confirm('确定要删除这条操作日志吗？')) {
-        // 从日志数组中移除指定日志
-        operationLogs = operationLogs.filter(log => log.id !== logId);
-        // 保存到本地存储
+// 撤销冻结/解冻（传统的表单提交格式）
+function undoFreeze(logId) {
+    const log = operationLogs.find(l => l.id === logId);
+    // if(!log) return;
+
+    if(confirm(`确定要撤销对会员 ${log.details.vipId} 的${log.details.newStatus}操作吗？`)) {
+        // 创建form元素
+        const form = document.createElement('form');
+        form.method = 'POST';
+        //form.action = fullPath;  // 使用计算得到的路径
+        form.action = `/AllVIPServlet`;  //正确后端路径
+        form.style.display = 'none';
+
+        // 添加type参数
+        const typeInput = document.createElement('input');
+        typeInput.type = 'hidden';
+        typeInput.name = 'type';
+        typeInput.value = 'undoFreeze';
+        form.appendChild(typeInput);
+
+        // 添加vipId参数
+        const idsInput = document.createElement('input');
+        idsInput.type = 'hidden';
+        idsInput.name = 'vipid';
+        idsInput.value = log.details.vipId;
+        form.appendChild(idsInput);
+
+        // 添加状态参数
+        const sInput = document.createElement('input');
+        sInput.type = 'hidden';
+        sInput.name = 'status';
+        sInput.value = log.details.oldStatus;
+        form.appendChild(sInput);
+
+        // 添加到DOM并提交
+        document.body.appendChild(form);
+        form.submit();
+
+        // 从日志中移除这条记录
+        operationLogs = operationLogs.filter(l => l.id !== logId);
         saveLogs();
-        // 重新渲染日志列表
-        renderLogList();
     }
 }
